@@ -3,12 +3,12 @@ pragma solidity ^0.5.0;
 // The game of RockPaperScissors
 contract RockPaperScissors {
     // There are two players in this game and each of them makes a choice
-    address payable public player1;
-    address payable public player2;
-    string public choiceOfPlayer1;
-    string public choiceOfPlayer2;
-    bool public hasPlayer1MadeChoice;
-    bool public hasPlayer2MadeChoice;
+    address payable private player1;
+    address payable private player2;
+    string private choiceOfPlayer1;
+    string private choiceOfPlayer2;
+    bool private hasPlayer1MadeChoice;
+    bool private hasPlayer2MadeChoice;
     
     // When a player joins the game, they have to pay a playing fee 
     uint256 private stake;
@@ -18,74 +18,69 @@ contract RockPaperScissors {
 
     // The constructor initialise the game environment
     constructor() public {
-        states["R"]["R"] = 0;
-        states["R"]["P"] = 2;
-        states["R"]["S"] = 1;
-        states["P"]["R"] = 1;
-        states["P"]["P"] = 0;
-        states["P"]["S"] = 2;
-        states["S"]["R"] = 2;
-        states["S"]["P"] = 1;
-        states["S"]["S"] = 0;
+        states['R']['R'] = 0;
+        states['R']['P'] = 2;
+        states['R']['S'] = 1;
+        states['P']['R'] = 1;
+        states['P']['P'] = 0;
+        states['P']['S'] = 2;
+        states['S']['R'] = 2;
+        states['S']['P'] = 1;
+        states['S']['S'] = 0;
 
         stake = 1 ether;
-        
-        reset();
     }
     
-    event GameStarted();
+    // Modifiers
     
-    modifier joinable() {
-        require(player1 == address(0) || player2 == address(0), "The room is full.");
-        require(msg.value == stake, "You must pay 1 ETH to play the game.");
+    modifier isJoinable() {
+        require(player1 == address(0) || player2 == address(0),
+                "The room is full."
+        );
+        require(msg.value == stake, 
+                "You must pay 1 ETH to play the game."
+        );
         _;
     }
     
-    modifier hasJoined() {
-        require(player1 != address(0) && player2 != address(0));
+    modifier isPlayer() {
+        require(msg.sender == player1 || msg.sender == player2,
+                "You are not playing this game."
+        );
         _;
     }
     
     modifier isValidChoice(string memory _playerChoice) {
         require(keccak256(bytes(_playerChoice)) == keccak256(bytes('R')) ||
                 keccak256(bytes(_playerChoice)) == keccak256(bytes('P')) ||
-                keccak256(bytes(_playerChoice)) == keccak256(bytes('S'))
+                keccak256(bytes(_playerChoice)) == keccak256(bytes('S')) ,
+                "Your choice is not valid, it should be one of R, P and S."
         );
         _;
     }
     
     modifier playersMadeChoice() {
-        require(hasPlayer1MadeChoice && hasPlayer2MadeChoice);
-        _;
-    }
-    
-    modifier gameOver() {
-        require(address(this).balance == 0 wei, "The game is not over yet.");
+        require(hasPlayer1MadeChoice && hasPlayer2MadeChoice,
+                "The player(s) have not made their choice yet."
+        );
         _;
     }
 
-    function join() external payable joinable() {
+    // Functions
+     
+    function join() external payable 
+        isJoinable() // To join the game, there must be a free space
+    {
         if (player1 == address(0))
             player1 = msg.sender;
         else
             player2 = msg.sender;
-            
-        if (player1 != address(0) && player2 != address(0))
-            emit GameStarted();
     }
     
-    function play(string calldata _playerChoice) external hasJoined() {
-        // each player makes their own choice (e.g. Rock, Paper, Scissors)
-        makeChoice(_playerChoice);
-        
-        // after making the choices, they disclose the result
-        disclose();
-        
-        // when the game is finished, it is reset
-        reset();
-    }
-    
-    function makeChoice(string memory _playerChoice) private isValidChoice(_playerChoice) {
+    function makeChoice(string calldata _playerChoice) external 
+        isPlayer()                      // Only the players can make the choice
+        isValidChoice(_playerChoice)    // The choices should be valid 
+    {
         if (msg.sender == player1 && !hasPlayer1MadeChoice) {
             choiceOfPlayer1 = _playerChoice;
             hasPlayer1MadeChoice = true;
@@ -95,7 +90,11 @@ contract RockPaperScissors {
         }
     }
     
-    function disclose() private playersMadeChoice() {
+    function disclose() external 
+        isPlayer()          // Only players can disclose the game result
+        playersMadeChoice() // Can disclose the result when choices are made
+    {
+        // Disclose the game result
         int result = states[choiceOfPlayer1][choiceOfPlayer2];
         if (result == 0) {
             player1.transfer(stake); 
@@ -105,9 +104,8 @@ contract RockPaperScissors {
         } else if (result == 2) {
             player2.transfer(address(this).balance);
         }
-    }
-    
-    function reset() private gameOver() {
+        
+        // Reset the game
         player1 = address(0);
         player2 = address(0);
 
@@ -118,4 +116,3 @@ contract RockPaperScissors {
         hasPlayer2MadeChoice = false;
     }
 }
-
