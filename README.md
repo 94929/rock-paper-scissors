@@ -23,3 +23,7 @@ No particular installation is required.
 13) Once the outcome of the game is disclosed, you will gain/lose 1 ether unless you draw. <br/>
 14) When the game is over, you can repeat the processes 7-13 to play the game again. <br/>
 
+## Todo
+
+1) Implement a code for encrypting the user input for security. <br/>
+2) Add timeout logic after a player making a choice. <br/>
