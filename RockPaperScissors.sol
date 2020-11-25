@@ -11,7 +11,7 @@ contract RockPaperScissors {
     bool private hasPlayer2MadeChoice;
     
     // When a player joins the game, they have to pay a playing fee 
-    uint256 private stake;
+    uint256 public stake; //the stake should be visible to Player2
 
     // A matrix containing result of the game depedning on its states
     mapping(string => mapping(string => uint8)) private states;
@@ -37,8 +37,8 @@ contract RockPaperScissors {
         require(player1 == address(0) || player2 == address(0),
                 "The room is full."
         );
-        require(msg.value == stake, 
-                "You must pay 1 ETH to play the game."
+        require((player1 != address(0) && msg.value == stake) || (player1 == address(0), //Player1 can choose the stake, Player2 has to match. 
+                "You must pay the stake to play the game."
         );
         _;
     }
@@ -71,9 +71,11 @@ contract RockPaperScissors {
     function join() external payable 
         isJoinable() // To join the game, there must be a free space
     {
-        if (player1 == address(0))
+        if (player1 == address(0)) {
             player1 = msg.sender;
-        else
+            stake = msg.value; //Player1 determines the stake
+            
+        } else
             player2 = msg.sender;
     }
     
@@ -114,5 +116,7 @@ contract RockPaperScissors {
         
         hasPlayer1MadeChoice = false;
         hasPlayer2MadeChoice = false;
+        
+        stake = 1 ether;
     }
 }
