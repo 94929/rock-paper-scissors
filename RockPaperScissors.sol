@@ -37,7 +37,7 @@ contract RockPaperScissors {
         require(player1 == address(0) || player2 == address(0),
                 "The room is full."
         );
-        require((player1 != address(0) && msg.value == stake) || (player1 == address(0), //Player1 can choose the stake, Player2 has to match. 
+        require((player1 != address(0) && msg.value == stake) || (player1 == address(0)), //Player1 can choose the stake, Player2 has to match. 
                 "You must pay the stake to play the game."
         );
         _;
